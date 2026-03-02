@@ -134,7 +134,7 @@ end function;
 **         not be proved is displayed on the screen.
 ******************************************************/
 
-function elimination_step_J(decomp, primes, twist : bdiv3 := false)
+function elimination_step_J(decomp, primes, twist, filename : bdiv3 := false)
 
 	/* We define a boolean variable stating whether the elimination step has been 
    	   carried out successfully. By default, we set it to true.                 */
@@ -302,11 +302,15 @@ function elimination_step_J(decomp, primes, twist : bdiv3 := false)
 			/* In the case where the bound is non-zero, we have successfully managed to bound the exponent. Since 
 		   	   p is prime, we display the possible exponents. */
 
+			message := Sprintf("i = %o of %o, small exponents after elimination = %o\n",i,#decomp,PrimeFactors(bound));
+			PrintFile(filename, message);
 			printf "i = %o of %o, small exponents after elimination = %o\n",i,#decomp,PrimeFactors(bound);
 					
 		else
 			/* If the bound is zero, the elimination step has been unsuccessful. */
 
+			message := Sprintf("i = %o of %o failed using %o\n",i,#decomp,primes);
+			PrintFile(filename, message);
 			printf "i = %o of %o failed using %o\n",i,#decomp,primes;
 			successful := false;
 		end if;
@@ -337,15 +341,21 @@ TwistList:=[1, -1, 2, -2, 2*u-2, -2*u-2, u-1, -u-1];
 
 /* For each twist, we perform the elimination using that twist. */
 
-print "The case 2|a and 3|b";
+primes := [3, 7, 11, 13, 17];
+
+filename := "/to_your_folder/elimination_step_output_level_N52.txt";
+PrintFile(filename, "The case 2|a and 3|b");
 time for d in TwistList do
-	print "-> Performing elimination for twist by d = ", d;
-  	elimination_step_J(decomp52, [3, 7, 11, 13], d : bdiv3 := true);
+	
+	PrintFile(filename, Sprintf("-> Performing elimination for twist by d = ", d));
+  	elimination_step_J(decomp52, primes, d, filename : bdiv3 := true);
 end for;
 
 print "************************";
 
-print "The case 2|c";
+filename := "/to_your_folder/elimination_step_output_level_N62.txt";
+PrintFile(filename, "The case 2|c");
 time for d in TwistList do
-  	elimination_step_J(decomp62, [3, 7, 11, 13], d);
+	PrintFile(filename, Sprintf("-> Performing elimination for twist by d = ", d));
+  	elimination_step_J(decomp62, primes, d, filename);
 end for;
