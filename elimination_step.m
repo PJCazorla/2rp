@@ -65,29 +65,25 @@ RK<x> := PolynomialRing(K);
 /******************************************************
 ** Name: get_traceFrob
 ** Description: Given the coefficients a, b of the curve
-**              C(a,b), a rational prime q and a twisting
-**              parameter, this function returns the list 
+**              C(a,b) and a rational prime q, 
+**              this function returns the list 
 **              of all possible traces of Frobenius of the 
-**              Jacobian of the curve C(a,b) twisted by the
-**              parameter on a GL_2 block.
+**              Jacobian of the curve C(a,b).
 **
 ** Arguments: a,b -> Integer parameters corresponding to the 
 **                   parameters of the curve C(a,b).
 **            q -> Rational prime over which the trace of 
 **                 Frobenius will be computed.
-**            twist -> Squarefree integer for which the 
-**                     curve will be twisted.
 **            
 ** Output: The list of all possible traces of Frobenius
 **         of the Jacobian of the curve over K.
 ******************************************************/
 
-function get_traceFrob(a,b,q,twist)
+function get_traceFrob(a,b,q)
 
-	/* We begin by defining the appropiate twist of the curve C(a,b) and finding the 
-	   prime ideal of OK lying over q. */
+	/* We begin by defining the curve C(a,b) and finding the prime ideal of OK lying over q. */
 	
-	Cab := QuadraticTwist(HyperellipticCurve(x^5 - 25*b*x^3 + 125*b^2*x - 250*a),twist);
+	Cab := HyperellipticCurve(x^5 - 25*b*x^3 + 125*b^2*x - 250*a);
 	qIdeal := Factorization(q*OK)[1,1];
 
 
@@ -95,7 +91,7 @@ function get_traceFrob(a,b,q,twist)
 	   the possible traces of Frobenius are -(the linear coefficient of the irreducible
 	   factors of Lf), and we return these. */
 	
-	Lf := EulerFactor(Cab,qIdeal);
+	Lf := EulerFactor(Cab, qIdeal);
 	Lf := Reverse(Lf);
 	Lfactor := Factorization(RK!Lf);
 	traceFrob := [-Coefficient(f[1],1) : f in Lfactor];
@@ -107,12 +103,12 @@ end function;
 /******************************************************
 ** Name: elimination_step_J
 ** Description: Given a list of modular forms and a list 
-**              of auxiliary primes and a twist, this function
+**              of auxiliary primes, this function
 **              performs the elimination step by attempting to 
 **              compute a bound for the exponent p. This is 
 **              performed by using all primes in the list (even
 **              if the same result could be possibly achieved 
-**              by using less) and for the given twist. 
+**              by using less). 
 **
 **              This function also displays all primes which
 **              could not be eliminated for each modular form.
@@ -121,8 +117,6 @@ end function;
 **            primes -> List of auxiliary primes that will be 
 **                      used for the elimination step. More primes
 **                      give better results but worse performance.
-**            twist -> Squarefree integer for which the 
-**                     curve will be twisted.
 **
 ** Parameters: bdiv3 -> Boolean parameter indicating whether b is 
 **                      assumed to be divisible by 3. By default its 
@@ -134,7 +128,7 @@ end function;
 **         not be proved is displayed on the screen.
 ******************************************************/
 
-function elimination_step_J(decomp, primes, twist, filename : bdiv3 := false)
+function elimination_step_J(decomp, primes, filename : bdiv3 := false)
 
 	/* We define a boolean variable stating whether the elimination step has been 
    	   carried out successfully. By default, we set it to true.                 */
@@ -196,7 +190,7 @@ function elimination_step_J(decomp, primes, twist, filename : bdiv3 := false)
 				   then a = 1,2 (mod 3). */
 				
 				for a in [1, 2] do
-					traceFrob := get_traceFrob(a,b,q,twist);
+					traceFrob := get_traceFrob(a,b,q);
 					
 					/* First case: only one trace of Frobenius. We compute the norm of tr(Frob)-aq, which 
                        			   will be added to the product. */
@@ -241,10 +235,9 @@ function elimination_step_J(decomp, primes, twist, filename : bdiv3 := false)
 							
 							if cp mod q ne 0 then
 			
-								/* We proceed to compute all possible traces of Frobenius for all 
-								possible twists. */
+								/* We proceed to compute all possible traces of Frobenius. */
 								
-								traceFrob := get_traceFrob(a,b,q,twist);
+								traceFrob := get_traceFrob(a,b,q);
 																
 								if #traceFrob eq 1 then
 									/* First subcase: only one trace of Frobenius. We compute 
@@ -334,28 +327,24 @@ time decomp52 := NewformDecomposition(NewSubspace(HilbertCuspForms(K, N52)));
 time decomp62 := NewformDecomposition(NewSubspace(HilbertCuspForms(K, N62)));
 
 
-/* In order to successfully carry out the elimination step, we need to consider eight different twists. */
+/* We perform the elimination using. */
 
-TwistList:=[1, -1, 2, -2, 2*u-2, -2*u-2, u-1, -u-1];
+primes := [3, 7, 11, 13, 17, 19, 23];
 
-
-/* For each twist, we perform the elimination using that twist. */
-
-primes := [3, 7, 11, 13, 17];
+/*  The case 2|a and 3|b */
 
 filename := "/to_your_folder/elimination_step_output_level_N52.txt";
-PrintFile(filename, "The case 2|a and 3|b");
-time for d in TwistList do
-	
-	PrintFile(filename, Sprintf("-> Performing elimination for twist by d = ", d));
-  	elimination_step_J(decomp52, primes, d, filename : bdiv3 := true);
-end for;
+PrintFile(filename, "The case 2|a and 3|b": Overwrite:=true);
+PrintFile(filename, Sprintf("primes = %o", primes));
+time elimination_step_J(decomp52, primes, filename : bdiv3 := true);
+
 
 print "************************";
 
+/* The case 2|c */
+
 filename := "/to_your_folder/elimination_step_output_level_N62.txt";
-PrintFile(filename, "The case 2|c");
-time for d in TwistList do
-	PrintFile(filename, Sprintf("-> Performing elimination for twist by d = ", d));
-  	elimination_step_J(decomp62, primes, d, filename);
-end for;
+PrintFile(filename, "The case 2|c": Overwrite:=true);
+PrintFile(filename, Sprintf("primes = %o", primes));
+time elimination_step_J(decomp62, primes, filename);
+
